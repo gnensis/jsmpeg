@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>JSMpeg Stream Client</title>
+	<style type="text/css">
+		html, body {
+			background-color: #111;
+			text-align: center;
+		}
+	</style>
+	
+</head>
+<body>
+    <table>
+        <tr>
+            <td>
+                <canvas id="video-canvas1"></canvas>
+	            <script type="text/javascript" src="jsmpeg.min.js"></script>
+	            <script type="text/javascript">
+		            var canvas1 = document.getElementById('video-canvas1');
+		            var url1 = 'ws://'+document.location.hostname+':8082/0001';
+		            var player1 = new JSMpeg.Player(url1, {canvas: canvas1});
+	            </script>
+            </td>
+            <td>
+                <canvas id="video-canvas2"></canvas>
+	            <script type="text/javascript" src="jsmpeg.min.js"></script>
+	            <script type="text/javascript">
+		            var canvas2 = document.getElementById('video-canvas2');
+		            var url2 = 'ws://'+document.location.hostname+':8082/0002';
+		            var player2 = new JSMpeg.Player(url2, {canvas: canvas2});
+	            </script>
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+            <canvas id="video-canvas3"></canvas>
+	        <script type="text/javascript" src="jsmpeg.min.js"></script>
+	        <script type="text/javascript">
+		        var canvas3 = document.getElementById('video-canvas3');
+		        var url3 = 'ws://'+document.location.hostname+':8082/0002';
+		        var player3 = new JSMpeg.Player(url3, {canvas: canvas3});
+	        </script>
+
+            </td>
+            <td>
+                <canvas id="video-canvas4"></canvas>
+	            <script type="text/javascript" src="jsmpeg.min.js"></script>
+	            <script type="text/javascript">
+		            var canvas4 = document.getElementById('video-canvas4');
+		            var url4 = 'ws://'+document.location.hostname+':8082/0001';
+		            var player4 = new JSMpeg.Player(url4, {canvas: canvas4});
+	            </script>
+
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

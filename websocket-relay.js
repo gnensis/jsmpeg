@@ -32,32 +32,81 @@ socketServer.on('connection', function(socket, upgradeReq) {
 		(upgradeReq || socket.upgradeReq).headers['user-agent'],
 		'('+socketServer.connectionCount+' total)'
 	);
-	socket.on('close', function(code, message){
+    var param = upgradeReq.url.substr(1).split('/');
+    var chnid = param[0];
+    var chnidStr = chnid.toString();
+    console.log('chnid: ' + chnid);
+    console.log('socket: ' + socket);
+    console.log('upgradeReq: ' + upgradeReq);
+    for(var chn in socketServer.connection){
+        if(chnidStr == chn){
+            console.log('chn: ' + chn + 'already exist.');
+            //upgradeReq.end();
+        }
+    }
+
+    if(!socketServer.connection){
+        socketServer.connection = new Object();    
+    }
+
+    if(!socketServer.connection[chnidStr]){
+        socketServer.connection[chnidStr] = new Object();
+        socketServer.connection[chnidStr].count = new Object();
+        socketServer.connection[chnidStr].clients = new Set();
+        socketServer.connection[chnidStr].count  = 1;
+        socketServer.connection[chnidStr].clients.add(socket);
+    }else{
+        socketServer.connection[chnidStr].count++;
+        socketServer.connection[chnidStr].clients.add(socket);
+    }
+
+    console.log('socketServer.connection[' + chnid + '].count: ' + socketServer.connection[chnidStr].count);
+
+    socket.on('close', function(code, message){
 		socketServer.connectionCount--;
 		console.log(
 			'Disconnected WebSocket ('+socketServer.connectionCount+' total)'
 		);
+        for(var chn in socketServer.connection){
+            socketServer.connection[chn].clients.forEach(function each(client) {
+                if (client.readyState != WebSocket.OPEN) {
+                    socketServer.connection[chn].clients.delete(client);
+                    socketServer.connection[chn].count--;
+                }
+            });
+            
+            console.log('scoketServer.connection[' + chn + '].count: ' + socketServer.connection[chn].count);
+        }
 	});
 });
-socketServer.broadcast = function(data) {
-	socketServer.clients.forEach(function each(client) {
-		if (client.readyState === WebSocket.OPEN) {
-			client.send(data);
-		}
-	});
+socketServer.broadcast = function(channel, data) {
+    for(var chn in socketServer.connection){
+        //console.log('chn: ' + chn);
+        //console.log('channel: ' + channel);
+        if(chn == channel){
+            socketServer.connection[chn].clients.forEach(function each(client) {
+		        if (client.readyState === WebSocket.OPEN) {
+			        client.send(data);
+		        }
+            });
+        }
+	}
 };
 
 // HTTP Server to accept incomming MPEG-TS Stream from ffmpeg
 var streamServer = http.createServer( function(request, response) {
 	var params = request.url.substr(1).split('/');
 
-	if (params[0] !== STREAM_SECRET) {
+    if (params[0] !== STREAM_SECRET) {
 		console.log(
 			'Failed Stream Connection: '+ request.socket.remoteAddress + ':' +
 			request.socket.remotePort + ' - wrong secret.'
 		);
 		response.end();
 	}
+
+    var chnid = params[1];
+    console.log('Channel id: ' + chnid);
 
 	response.connection.setTimeout(0);
 	console.log(
@@ -66,7 +115,7 @@ var streamServer = http.createServer( function(request, response) {
 		request.socket.remotePort
 	);
 	request.on('data', function(data){
-		socketServer.broadcast(data);
+		socketServer.broadcast(chnid, data);
 		if (request.socket.recording) {
 			request.socket.recording.write(data);
 		}
